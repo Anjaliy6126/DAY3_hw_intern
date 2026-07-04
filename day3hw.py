@@ -9,191 +9,264 @@ Original file is located at
 
 # ==========================================================
 # Employee Retention Prediction using Logistic Regression
-# Google Colab Code (Complete)
+# Streamlit App
 # ==========================================================
 
-# ----------------------------
-# Step 1: Import Libraries
-# ----------------------------
+import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from google.colab import files
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
-# ----------------------------
-# Step 2: Upload and Load Dataset
-# ----------------------------
-# Upload the file "HR_comma_sep.csv" from your computer
-uploaded = files.upload()
+# ----------------------------------------------------------
+# Streamlit Page Configuration
+# ----------------------------------------------------------
 
-# Read the dataset
-df = pd.read_csv("/content/HR_comma_sep.csv")
+st.set_page_config(page_title="Employee Retention Prediction", layout="wide")
 
-# Display first five rows
-print("First 5 Rows of Dataset")
-display(df.head())
-
-# ----------------------------
-# Step 3: Basic Information
-# ----------------------------
-
-# Dataset shape
-print("Dataset Shape:", df.shape)
-
-# Dataset information
-print("\nDataset Information")
-df.info()
-
-# Check for missing values
-print("\nMissing Values")
-print(df.isnull().sum())
-
-# Statistical summary
-print("\nStatistical Summary")
-display(df.describe())
-
-# ----------------------------
-# Step 4: Exploratory Data Analysis (EDA)
-# ----------------------------
-
-# Average values for employees who stayed and left
-print("\nAverage Values Grouped by Employee Retention")
-display(df.groupby("left").mean(numeric_only=True))
-
-# Correlation Heatmap
-plt.figure(figsize=(10,6))
-sns.heatmap(df.corr(numeric_only=True), annot=True, cmap="coolwarm")
-plt.title("Correlation Heatmap")
-plt.show()
-
-# ----------------------------
-# Step 5: Salary vs Employee Retention
-# ----------------------------
-
-pd.crosstab(df.salary, df.left).plot(kind='bar', figsize=(6,5))
-
-plt.title("Salary vs Employee Retention")
-plt.xlabel("Salary")
-plt.ylabel("Number of Employees")
-plt.legend(["Stayed", "Left"])
-plt.show()
-
-# ----------------------------
-# Step 6: Department vs Employee Retention
-# ----------------------------
-
-pd.crosstab(df.Department, df.left).plot(kind='bar', figsize=(10,6))
-
-plt.title("Department vs Employee Retention")
-plt.xlabel("Department")
-plt.ylabel("Number of Employees")
-plt.legend(["Stayed", "Left"])
-plt.show()
-
-# ----------------------------
-# Step 7: Feature Selection
-# ----------------------------
-# Selected important features based on EDA
-
-sub_df = df[[
-    'satisfaction_level',
-    'average_montly_hours',
-    'promotion_last_5years',
-    'salary'
-]]
-
-# ----------------------------
-# Step 8: Convert Categorical Data
-# ----------------------------
-# Convert salary column into dummy variables
-
-salary_dummies = pd.get_dummies(sub_df['salary'], prefix='salary')
-
-# Combine numerical and dummy variables
-X = pd.concat([
-    sub_df[['satisfaction_level',
-            'average_montly_hours',
-            'promotion_last_5years']],
-    salary_dummies
-], axis=1)
-
-# Drop one dummy variable to avoid dummy variable trap
-X = X.drop('salary_high', axis=1)
-
-# Target variable
-y = df['left']
-
-print("\nFeature Matrix")
-display(X.head())
-
-# ----------------------------
-# Step 9: Split Dataset
-# ----------------------------
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.20,
-    random_state=42
+st.title("📊 Employee Retention Prediction")
+st.write(
+    "This application performs Exploratory Data Analysis (EDA) and "
+    "predicts employee retention using Logistic Regression."
 )
 
-# ----------------------------
-# Step 10: Train Logistic Regression Model
-# ----------------------------
+# ----------------------------------------------------------
+# Upload Dataset
+# ----------------------------------------------------------
 
-model = LogisticRegression(max_iter=1000)
+uploaded_file = st.file_uploader(
+    "Upload HR_comma_sep.csv",
+    type=["csv"]
+)
 
-model.fit(X_train, y_train)
+if uploaded_file is not None:
 
-# ----------------------------
-# Step 11: Prediction
-# ----------------------------
+    # Read dataset
+    df = pd.read_csv(uploaded_file)
 
-y_pred = model.predict(X_test)
+    # ------------------------------------------------------
+    # Display Dataset
+    # ------------------------------------------------------
 
-# ----------------------------
-# Step 12: Model Accuracy
-# ----------------------------
+    st.header("Dataset Preview")
+    st.dataframe(df.head())
 
-accuracy = accuracy_score(y_test, y_pred)
+    st.write("**Dataset Shape:**", df.shape)
 
-print("\nModel Accuracy:", round(accuracy*100,2), "%")
+    # ------------------------------------------------------
+    # Dataset Information
+    # ------------------------------------------------------
 
-# ----------------------------
-# Step 13: Confusion Matrix
-# ----------------------------
+    st.header("Dataset Information")
 
-cm = confusion_matrix(y_test, y_pred)
+    info_df = pd.DataFrame({
+        "Column": df.columns,
+        "Data Type": df.dtypes.astype(str),
+        "Missing Values": df.isnull().sum().values
+    })
 
-plt.figure(figsize=(5,4))
-sns.heatmap(cm,
-            annot=True,
-            fmt='d',
-            cmap='Blues')
+    st.dataframe(info_df)
 
-plt.title("Confusion Matrix")
-plt.xlabel("Predicted")
-plt.ylabel("Actual")
-plt.show()
+    # ------------------------------------------------------
+    # Statistical Summary
+    # ------------------------------------------------------
 
-# ----------------------------
-# Step 14: Classification Report
-# ----------------------------
+    st.header("Statistical Summary")
+    st.dataframe(df.describe())
 
-print("\nClassification Report")
-print(classification_report(y_test, y_pred))
+    # ------------------------------------------------------
+    # Average values grouped by employee retention
+    # ------------------------------------------------------
 
-# ----------------------------
-# Step 15: Sample Predictions
-# ----------------------------
+    st.header("Average Values Grouped by Employee Retention")
 
-print("\nFirst 10 Predictions")
-print(y_pred[:10])
+    st.dataframe(df.groupby("left").mean(numeric_only=True))
 
-print("\nActual Values")
-print(y_test.values[:10])
+    # ------------------------------------------------------
+    # Correlation Heatmap
+    # ------------------------------------------------------
+
+    st.header("Correlation Heatmap")
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.heatmap(
+        df.corr(numeric_only=True),
+        annot=True,
+        cmap="coolwarm",
+        ax=ax
+    )
+
+    st.pyplot(fig)
+
+    # ------------------------------------------------------
+    # Salary vs Employee Retention
+    # ------------------------------------------------------
+
+    st.header("Salary vs Employee Retention")
+
+    salary_chart = pd.crosstab(df["salary"], df["left"])
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+    salary_chart.plot(kind="bar", ax=ax)
+
+    ax.set_title("Salary vs Employee Retention")
+    ax.set_xlabel("Salary")
+    ax.set_ylabel("Number of Employees")
+    ax.legend(["Stayed", "Left"])
+
+    st.pyplot(fig)
+
+    # ------------------------------------------------------
+    # Department vs Employee Retention
+    # ------------------------------------------------------
+
+    st.header("Department vs Employee Retention")
+
+    dept_column = "Department" if "Department" in df.columns else "sales"
+
+    dept_chart = pd.crosstab(df[dept_column], df["left"])
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    dept_chart.plot(kind="bar", ax=ax)
+
+    ax.set_title("Department vs Employee Retention")
+    ax.set_xlabel("Department")
+    ax.set_ylabel("Number of Employees")
+    ax.legend(["Stayed", "Left"])
+
+    st.pyplot(fig)
+
+    # ------------------------------------------------------
+    # Feature Selection
+    # ------------------------------------------------------
+
+    st.header("Logistic Regression Model")
+
+    sub_df = df[
+        [
+            "satisfaction_level",
+            "average_montly_hours",
+            "promotion_last_5years",
+            "salary",
+        ]
+    ]
+
+    # Convert salary into dummy variables
+    salary_dummies = pd.get_dummies(
+        sub_df["salary"],
+        prefix="salary"
+    )
+
+    X = pd.concat(
+        [
+            sub_df[
+                [
+                    "satisfaction_level",
+                    "average_montly_hours",
+                    "promotion_last_5years",
+                ]
+            ],
+            salary_dummies,
+        ],
+        axis=1,
+    )
+
+    # Drop one dummy variable
+    if "salary_high" in X.columns:
+        X = X.drop("salary_high", axis=1)
+
+    y = df["left"]
+
+    # ------------------------------------------------------
+    # Train-Test Split
+    # ------------------------------------------------------
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.20,
+        random_state=42,
+    )
+
+    # ------------------------------------------------------
+    # Train Model
+    # ------------------------------------------------------
+
+    model = LogisticRegression(max_iter=1000)
+
+    model.fit(X_train, y_train)
+
+    # ------------------------------------------------------
+    # Prediction
+    # ------------------------------------------------------
+
+    y_pred = model.predict(X_test)
+
+    # ------------------------------------------------------
+    # Accuracy
+    # ------------------------------------------------------
+
+    accuracy = accuracy_score(y_test, y_pred)
+
+    st.success(f"Model Accuracy: {accuracy * 100:.2f}%")
+
+    # ------------------------------------------------------
+    # Confusion Matrix
+    # ------------------------------------------------------
+
+    st.header("Confusion Matrix")
+
+    cm = confusion_matrix(y_test, y_pred)
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        ax=ax
+    )
+
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Actual")
+
+    st.pyplot(fig)
+
+    # ------------------------------------------------------
+    # Classification Report
+    # ------------------------------------------------------
+
+    st.header("Classification Report")
+
+    report = classification_report(
+        y_test,
+        y_pred,
+        output_dict=True
+    )
+
+    report_df = pd.DataFrame(report).transpose()
+
+    st.dataframe(report_df)
+
+    # ------------------------------------------------------
+    # Sample Predictions
+    # ------------------------------------------------------
+
+    st.header("Sample Predictions")
+
+    prediction_df = pd.DataFrame(
+        {
+            "Actual": y_test.values[:10],
+            "Predicted": y_pred[:10],
+        }
+    )
+
+    st.dataframe(prediction_df)
+
+else:
+
+    st.info("Please upload the HR_comma_sep.csv file to continue.")
