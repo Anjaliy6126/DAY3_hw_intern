@@ -2,256 +2,120 @@
 # Employee Retention Prediction using Logistic Regression
 # Streamlit App
 # ==========================================================
-
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    classification_report,
-)
+from sklearn.metrics import accuracy_score
 
-# ----------------------------------------------------------
-# Page Configuration
-# ----------------------------------------------------------
-
-st.set_page_config(
-    page_title="Employee Retention Prediction",
-    layout="wide"
-)
-
-st.title("📊 Employee Retention Prediction")
-st.write(
-    "This application performs Exploratory Data Analysis (EDA) "
-    "and predicts employee retention using Logistic Regression."
-)
-
-# ----------------------------------------------------------
+# -----------------------------
 # Load Dataset
-# ----------------------------------------------------------
+# -----------------------------
+df = pd.read_csv("HR_comma_sep.csv")
 
-try:
-    df = pd.read_csv("HR_comma_sep.csv")
-except FileNotFoundError:
-    st.error("❌ HR_comma_sep.csv not found. Place the file in the same folder as day3hw.py")
-    st.stop()
+# -----------------------------
+# Prepare Data
+# -----------------------------
+X = df[['satisfaction_level',
+        'average_montly_hours',
+        'promotion_last_5years',
+        'salary']]
 
-# ----------------------------------------------------------
-# Dataset Preview
-# ----------------------------------------------------------
-
-st.header("Dataset Preview")
-st.dataframe(df.head())
-
-st.write("**Dataset Shape:**", df.shape)
-
-# ----------------------------------------------------------
-# Dataset Information
-# ----------------------------------------------------------
-
-st.header("Dataset Information")
-
-info_df = pd.DataFrame({
-    "Column": df.columns,
-    "Data Type": df.dtypes.astype(str),
-    "Missing Values": df.isnull().sum().values
-})
-
-st.dataframe(info_df)
-
-# ----------------------------------------------------------
-# Statistical Summary
-# ----------------------------------------------------------
-
-st.header("Statistical Summary")
-st.dataframe(df.describe())
-
-# ----------------------------------------------------------
-# Average Values Grouped by Employee Retention
-# ----------------------------------------------------------
-
-st.header("Average Values Grouped by Employee Retention")
-st.dataframe(df.groupby("left").mean(numeric_only=True))
-
-# ----------------------------------------------------------
-# Correlation Heatmap
-# ----------------------------------------------------------
-
-st.header("Correlation Heatmap")
-
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.heatmap(
-    df.corr(numeric_only=True),
-    annot=True,
-    cmap="coolwarm",
-    ax=ax
-)
-
-st.pyplot(fig)
-
-# ----------------------------------------------------------
-# Salary vs Employee Retention
-# ----------------------------------------------------------
-
-st.header("Salary vs Employee Retention")
-
-salary_chart = pd.crosstab(df["salary"], df["left"])
-
-fig, ax = plt.subplots(figsize=(6, 5))
-salary_chart.plot(kind="bar", ax=ax)
-
-ax.set_xlabel("Salary")
-ax.set_ylabel("Employees")
-ax.set_title("Salary vs Employee Retention")
-
-st.pyplot(fig)
-
-# ----------------------------------------------------------
-# Department vs Employee Retention
-# ----------------------------------------------------------
-
-st.header("Department vs Employee Retention")
-
-# Some datasets use "sales" instead of "Department"
-department_column = "Department" if "Department" in df.columns else "sales"
-
-dept_chart = pd.crosstab(df[department_column], df["left"])
-
-fig, ax = plt.subplots(figsize=(10, 6))
-dept_chart.plot(kind="bar", ax=ax)
-
-ax.set_xlabel("Department")
-ax.set_ylabel("Employees")
-ax.set_title("Department vs Employee Retention")
-
-st.pyplot(fig)
-
-# ----------------------------------------------------------
-# Feature Selection
-# ----------------------------------------------------------
-
-features = df[
-    [
-        "satisfaction_level",
-        "average_montly_hours",
-        "promotion_last_5years",
-        "salary"
-    ]
-]
-
-# ----------------------------------------------------------
-# Convert Salary into Dummy Variables
-# ----------------------------------------------------------
-
-salary_dummies = pd.get_dummies(features["salary"], prefix="salary")
+salary_dummies = pd.get_dummies(X['salary'], prefix='salary')
 
 X = pd.concat(
-    [
-        features[
-            [
-                "satisfaction_level",
-                "average_montly_hours",
-                "promotion_last_5years",
-            ]
-        ],
-        salary_dummies,
-    ],
-    axis=1,
+    [X.drop('salary', axis=1), salary_dummies],
+    axis=1
 )
 
-# Remove one dummy column
-if "salary_high" in X.columns:
-    X = X.drop("salary_high", axis=1)
+# Drop one dummy column
+if 'salary_high' in X.columns:
+    X = X.drop('salary_high', axis=1)
 
-y = df["left"]
+y = df['left']
 
-# ----------------------------------------------------------
-# Train Test Split
-# ----------------------------------------------------------
-
+# -----------------------------
+# Train Model
+# -----------------------------
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
-    test_size=0.20,
+    test_size=0.2,
     random_state=42
 )
 
-# ----------------------------------------------------------
-# Train Model
-# ----------------------------------------------------------
-
 model = LogisticRegression(max_iter=1000)
-
 model.fit(X_train, y_train)
 
-# ----------------------------------------------------------
-# Predictions
-# ----------------------------------------------------------
-
-y_pred = model.predict(X_test)
-
-# ----------------------------------------------------------
 # Accuracy
-# ----------------------------------------------------------
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred) * 100
 
-accuracy = accuracy_score(y_test, y_pred)
+# -----------------------------
+# Streamlit UI
+# -----------------------------
+st.set_page_config(page_title="Employee Retention Predictor")
 
+st.title("Employee Retention Prediction")
+
+satisfaction = st.number_input(
+    "Satisfaction Level",
+    min_value=0.0,
+    max_value=1.0,
+    value=0.50,
+    step=0.01
+)
+
+hours = st.number_input(
+    "Average Monthly Hours",
+    min_value=50,
+    max_value=350,
+    value=200
+)
+
+promotion = st.selectbox(
+    "Promotion in Last 5 Years",
+    [0, 1]
+)
+
+salary = st.selectbox(
+    "Salary",
+    ["Low", "Medium", "High"]
+)
+
+if st.button("Predict"):
+
+    salary_low = 0
+    salary_medium = 0
+
+    if salary == "Low":
+        salary_low = 1
+    elif salary == "Medium":
+        salary_medium = 1
+
+    user_data = pd.DataFrame({
+        'satisfaction_level': [satisfaction],
+        'average_montly_hours': [hours],
+        'promotion_last_5years': [promotion],
+        'salary_low': [salary_low],
+        'salary_medium': [salary_medium]
+    })
+
+    prediction = model.predict(user_data)[0]
+    probability = model.predict_proba(user_data)[0]
+
+    st.subheader("Prediction")
+
+    if prediction == 1:
+        st.error(
+            f"Employee is likely to LEAVE ({probability[1]*100:.2f}%)"
+        )
+    else:
+        st.success(
+            f"Employee is likely to STAY ({probability[0]*100:.2f}%)"
+        )
+
+st.markdown("---")
 st.header("Model Accuracy")
-st.success(f"{accuracy * 100:.2f}%")
-
-# ----------------------------------------------------------
-# Confusion Matrix
-# ----------------------------------------------------------
-
-st.header("Confusion Matrix")
-
-cm = confusion_matrix(y_test, y_pred)
-
-fig, ax = plt.subplots(figsize=(5, 4))
-
-sns.heatmap(
-    cm,
-    annot=True,
-    fmt="d",
-    cmap="Blues",
-    ax=ax
-)
-
-ax.set_xlabel("Predicted")
-ax.set_ylabel("Actual")
-
-st.pyplot(fig)
-
-# ----------------------------------------------------------
-# Classification Report
-# ----------------------------------------------------------
-
-st.header("Classification Report")
-
-report = classification_report(
-    y_test,
-    y_pred,
-    output_dict=True
-)
-
-report_df = pd.DataFrame(report).transpose()
-
-st.dataframe(report_df)
-
-# ----------------------------------------------------------
-# Sample Predictions
-# ----------------------------------------------------------
-
-st.header("Sample Predictions")
-
-prediction_df = pd.DataFrame({
-    "Actual": y_test.values[:10],
-    "Predicted": y_pred[:10]
-})
-
-st.dataframe(prediction_df)
+st.write(f"Accuracy: {accuracy:.2f}%")
