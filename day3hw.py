@@ -24,7 +24,13 @@ st.markdown("""
     <style>
     /* Overall app background */
     .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #e4ecf7 100%);
+        background: linear-gradient(135deg, #0f1117 0%, #1a1d29 100%);
+        color: #f1f5f9;
+    }
+
+    /* Make all default text light */
+    .stApp, .stApp p, .stApp span, .stApp label, .stApp div {
+        color: #f1f5f9;
     }
 
     /* Main title */
@@ -32,7 +38,7 @@ st.markdown("""
         text-align: center;
         font-size: 42px;
         font-weight: 800;
-        color: #1f2d5a;
+        color: #ffffff;
         margin-bottom: 0px;
     }
 
@@ -40,31 +46,39 @@ st.markdown("""
     .sub-title {
         text-align: center;
         font-size: 17px;
-        color: #4a5568;
+        color: #cbd5e1;
         margin-top: 5px;
         margin-bottom: 25px;
     }
 
     /* Card container look for sections */
     .card {
-        background-color: #ffffff;
+        background-color: #1e2130;
         padding: 22px 26px;
         border-radius: 16px;
-        box-shadow: 0px 4px 14px rgba(0,0,0,0.08);
+        box-shadow: 0px 4px 14px rgba(0,0,0,0.4);
         margin-bottom: 22px;
+        border: 1px solid #2d3348;
     }
 
     /* Section headers */
     .section-header {
         font-size: 22px;
         font-weight: 700;
-        color: #2d3a6b;
+        color: #ffffff;
         margin-bottom: 10px;
+    }
+
+    /* Input widgets */
+    .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
+        background-color: #262a3d !important;
+        color: #f1f5f9 !important;
+        border-radius: 8px !important;
     }
 
     /* Predict button */
     div.stButton > button {
-        background: linear-gradient(90deg, #4361ee, #3a0ca3);
+        background: linear-gradient(90deg, #4361ee, #7209b7);
         color: white;
         font-weight: 700;
         font-size: 16px;
@@ -75,19 +89,20 @@ st.markdown("""
         transition: 0.3s;
     }
     div.stButton > button:hover {
-        background: linear-gradient(90deg, #3a0ca3, #4361ee);
+        background: linear-gradient(90deg, #7209b7, #4361ee);
         transform: scale(1.02);
     }
 
     /* Accuracy box */
     .accuracy-box {
-        background: linear-gradient(90deg, #d0f4de, #a9def9);
+        background: linear-gradient(90deg, #134e4a, #1e3a5f);
         padding: 18px;
         border-radius: 14px;
         text-align: center;
         font-size: 18px;
         font-weight: 700;
-        color: #1f2d5a;
+        color: #f1f5f9;
+        border: 1px solid #2d3348;
     }
 
     /* Footer */
@@ -95,7 +110,12 @@ st.markdown("""
         text-align: center;
         margin-top: 30px;
         font-size: 13px;
-        color: #718096;
+        color: #94a3b8;
+    }
+
+    /* Horizontal rule */
+    hr {
+        border-color: #2d3348 !important;
     }
     </style>
 """, unsafe_allow_html=True)
